@@ -52,7 +52,6 @@
 
         .floating {
             position: absolute;
-            color: #00ffcc;
             font-weight: bold;
             animation: floatUp 1s ease-out forwards;
             pointer-events: none;
@@ -79,25 +78,61 @@
 
 <button id="clickBtn" onclick="addCoins(event)">TAP 💥</button>
 
+<button class="shopBtn" onclick="buyUpgrade()">
+Upgrade (+1 CPC) - Cost: <span id="upgradeCost">10</span>
+</button>
+
 <script>
 let coins = 0;
+let displayedCoins = 0;
 let coinsPerClick = 1;
+let upgradeCost = 10;
+
+function animateCounter() {
+    if (displayedCoins < coins) {
+        displayedCoins += Math.ceil((coins - displayedCoins) / 8);
+        document.getElementById("coins").innerText = displayedCoins;
+        requestAnimationFrame(animateCounter);
+    } else {
+        displayedCoins = coins;
+        document.getElementById("coins").innerText = coins;
+    }
+}
 
 function updateDisplay() {
-    document.getElementById("coins").innerText = coins;
+    animateCounter();
     document.getElementById("cpc").innerText = coinsPerClick;
+    document.getElementById("upgradeCost").innerText = upgradeCost;
 }
 
 function addCoins(event) {
-    coins += coinsPerClick;
+    let amount = coinsPerClick;
+    let crit = false;
+
+    // 15% chance for critical hit
+    if (Math.random() < 0.15) {
+        amount *= 3;
+        crit = true;
+    }
+
+    coins += amount;
     updateDisplay();
-    createFloatingText(event);
+    createFloatingText(event, amount, crit);
 }
 
-function createFloatingText(event) {
+function createFloatingText(event, amount, crit) {
     let float = document.createElement("div");
     float.className = "floating";
-    float.innerText = "+" + coinsPerClick;
+
+    if (crit) {
+        float.innerText = "CRIT! +" + amount;
+        float.style.color = "gold";
+        float.style.fontSize = "22px";
+        float.style.textShadow = "0 0 10px gold";
+    } else {
+        float.innerText = "+" + amount;
+        float.style.color = "#00ffcc";
+    }
 
     float.style.left = event.clientX + "px";
     float.style.top = event.clientY + "px";
@@ -107,6 +142,15 @@ function createFloatingText(event) {
     setTimeout(() => {
         float.remove();
     }, 1000);
+}
+
+function buyUpgrade() {
+    if (coins >= upgradeCost) {
+        coins -= upgradeCost;
+        coinsPerClick += 1;
+        upgradeCost = Math.floor(upgradeCost * 1.5);
+        updateDisplay();
+    }
 }
 
 updateDisplay();
